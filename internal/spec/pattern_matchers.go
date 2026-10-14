@@ -768,10 +768,8 @@ func unwrapComposite(arg *metadata.CallArgument) *metadata.CallArgument {
 // parameter name so it can be rewritten to a plain {path} segment.
 var serveMuxTrailingWildcard = mustCachedRegex(`\{([a-zA-Z_][a-zA-Z0-9_]*)\.\.\.\}`)
 
-// splitMethodFromPath splits a Go 1.22 ServeMux registration pattern of the
-// form "[METHOD ][HOST]/[PATH]" into its method and the remaining path. It
-// returns an empty method (and the input unchanged) when no leading HTTP verb
-// is present, so plain net/http patterns like "/health" pass through untouched.
+// splitMethodFromPath splits a leading HTTP verb from a registration path.
+// Without a verb, the path passes through unchanged.
 func splitMethodFromPath(raw string) (method, path string) {
 	raw = strings.Trim(raw, "\"'")
 	i := strings.IndexByte(raw, ' ')
@@ -1063,16 +1061,15 @@ func (r *RoutePatternMatcherImpl) extractRouteDetails(node TrackerNodeInterface,
 
 	if r.pattern.PathFromArg && len(edge.Args) > r.pattern.PathArgIndex {
 		path, dynNames := r.resolvePathArg(edge.Args[r.pattern.PathArgIndex], node)
-		// Go 1.22's net/http.ServeMux carries the HTTP method on the
-		// registration pattern itself: mux.HandleFunc("GET /users/{id}", h).
-		// When MethodFromPath is set, split the leading verb off the path and
-		// normalise ServeMux-specific wildcard syntax ({id...}, {$}).
+		// A verb in the path takes precedence over handler-name inference.
 		if r.pattern.MethodFromPath {
 			if method, rest := splitMethodFromPath(path); method != "" {
 				routeInfo.Method = method
 				routeInfo.MethodExplicit = true
 				path = rest
 			}
+		}
+		if r.pattern.NormalizeServeMuxPath {
 			// The host selects the mux entry; it is not part of the requested
 			// URL (issue #356).
 			if _, rest := splitHostFromPath(path, r.cfg.knownHosts()); rest != path {

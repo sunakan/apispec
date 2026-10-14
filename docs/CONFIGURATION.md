@@ -519,6 +519,13 @@ Sub-keys of `framework`:
 | `requestContext` | Which receivers/accessors mark a "request body" source. Its `typeRegexes` are also what a param pattern with `requireRequestOrigin` checks against: a query key is read off the request only when its `url.Values` traces to a value of one of these types, so `u.Query().Get(k)` on a URL parsed from configuration is not a parameter. |
 | `responseContext` | Which types are the response *writer*, for response patterns gated on write destination (`requireResponseDestination`). An **empty `writerTypeRegexes` disables that gate**, and with it every streamed body — the `Content-Type` declaration is then unplaceable, so nothing is claimed. Parameter reads state their own exclusion per pattern (`excludeRecvOriginRegex`). |
 
+Route patterns can set `methodFromPath: true` to extract a leading HTTP verb
+from a path such as `"POST /items"`. This does not change path syntax.
+`normalizeServeMuxPath: true` separately strips configured hosts and converts
+ServeMux's `{name...}` and `{$}` syntax. The net/http presets enable both;
+Chi's `Handle`/`HandleFunc` pattern enables only method extraction, retaining
+handler-name inference when the path has no verb.
+
 ### Anchoring a response pattern
 
 A `responsePattern` matches by **call name**. If it also sets `typeFromArg` and is

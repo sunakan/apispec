@@ -31,12 +31,16 @@ func TestTestdata_ChiMethodHandle(t *testing.T) {
 	noDanglingRefs(t, out)
 
 	want := map[string][]string{
-		"/live":    {"GET"},           // plain r.Get with a func value
-		"/live2":   {"GET"},           // r.Get with a method value on a struct field
-		"/health":  {"GET"},           // r.Method(http.MethodGet, ..., http.Handler value)
-		"/ready":   {"POST"},          // r.MethodFunc(http.MethodPost, ...)
-		"/metrics": {"GET"},           // r.Handle with an opaque handler: defaulted GET
-		"/items":   {"GET", "DELETE"}, // r.HandleFunc + switch r.Method: split per verb
+		"/live":            {"GET"},           // plain r.Get with a func value
+		"/live2":           {"GET"},           // r.Get with a method value on a struct field
+		"/health":          {"GET"},           // r.Method(http.MethodGet, ..., http.Handler value)
+		"/ready":           {"POST"},          // r.MethodFunc(http.MethodPost, ...)
+		"/metrics":         {"GET"},           // r.Handle with an opaque handler: defaulted GET
+		"/items":           {"GET", "DELETE"}, // r.HandleFunc + switch r.Method: split per verb
+		"/explicit":        {"POST"},
+		"/tail/{$}":        {"GET"},
+		"/files/{rest...}": {"GET"},
+		"/handled":         {"POST"},
 	}
 	for path, methods := range want {
 		item, ok := out.Paths[path]
@@ -47,6 +51,18 @@ func TestTestdata_ChiMethodHandle(t *testing.T) {
 		for _, m := range methods {
 			if opFor(item, m) == nil {
 				t.Errorf("%s %s: expected operation, missing", m, path)
+			}
+		}
+	}
+	if len(out.Paths) != len(want) {
+		t.Errorf("unexpected paths: got %v, want %v", mapPathKeys(out.Paths), want)
+	}
+	for _, path := range []string{"/explicit", "/handled"} {
+		if item, ok := out.Paths[path]; ok {
+			for _, method := range []string{"GET", "DELETE"} {
+				if opFor(item, method) != nil {
+					t.Errorf("%s %s: leading POST must override handler inference", method, path)
+				}
 			}
 		}
 	}

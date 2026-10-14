@@ -556,7 +556,11 @@ type RoutePattern struct {
 	// Extraction hints
 	MethodFromCall    bool `yaml:"methodFromCall,omitempty" json:"methodFromCall,omitempty"`       // Extract method from function name
 	MethodFromHandler bool `yaml:"methodFromHandler,omitempty" json:"methodFromHandler,omitempty"` // Extract method from handler function name
-	MethodFromPath    bool `yaml:"methodFromPath,omitempty" json:"methodFromPath,omitempty"`       // Extract method from a leading verb in the path arg (Go 1.22 ServeMux: "GET /users/{id}")
+	MethodFromPath    bool `yaml:"methodFromPath,omitempty" json:"methodFromPath,omitempty"`       // Extract method from a leading verb in the path arg ("GET /users/{id}")
+
+	// NormalizeServeMuxPath strips configured hosts and normalizes {name...}/{$}
+	// in net/http patterns. Other routers may use these as literal parameter names.
+	NormalizeServeMuxPath bool `yaml:"normalizeServeMuxPath,omitempty" json:"normalizeServeMuxPath,omitempty"`
 
 	// MethodFromArg reads the verb from the argument at MethodArgIndex, which may
 	// name SEVERAL, comma-separated: a house router's `Methods("GET,POST", path,

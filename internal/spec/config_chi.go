@@ -72,14 +72,13 @@ func DefaultChiConfig() *APISpecConfig {
 				},
 				{
 					// r.Handle("/metrics", handler) / r.HandleFunc("/items", fn)
-					// route EVERY verb to the handler. Emit the handler-name
-					// verb when the name carries one; otherwise default (GET)
-					// without marking it explicit, so a `switch r.Method`
-					// handler still splits into one operation per verb.
+					// accept a leading verb. Without one, infer from the handler
+					// name or leave the default open for `switch r.Method`.
 					CallRegex:         `^Handle(Func)?$`,
 					PathFromArg:       true,
 					HandlerFromArg:    true,
 					MethodFromHandler: true,
+					MethodFromPath:    true,
 					MethodArgIndex:    -1,
 					PathArgIndex:      0,
 					HandlerArgIndex:   1,

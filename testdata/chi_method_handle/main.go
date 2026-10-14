@@ -65,6 +65,10 @@ func itemsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func specialHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
 // NewRouter registers the same kind of endpoint several ways.
 func NewRouter(deps Deps) *chi.Mux {
 	r := chi.NewRouter()
@@ -75,6 +79,10 @@ func NewRouter(deps Deps) *chi.Mux {
 	r.MethodFunc(http.MethodPost, "/ready", readyHandler)
 	r.Handle("/metrics", deps.Metrics) // opaque http.Handler
 	r.HandleFunc("/items", itemsHandler)
+	r.HandleFunc("POST /explicit", itemsHandler)
+	r.HandleFunc("GET /tail/{$}", specialHandler)
+	r.HandleFunc("GET /files/{rest...}", specialHandler)
+	r.Handle("POST /handled", http.HandlerFunc(specialHandler))
 
 	return r
 }
